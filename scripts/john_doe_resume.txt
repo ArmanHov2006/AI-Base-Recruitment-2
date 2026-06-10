@@ -1,0 +1,36 @@
+Alex Rivers
+Software Engineer
+Yerevan, Armenia
+Email: alex.rivers.mid.dev@example.com
+Phone: +374 91 123456
+
+Summary:
+Mid-level Software Engineer with over 3 years of experience specializing in Python and JavaScript. Expertise in building scalable REST APIs, optimizing SQL databases, and implementing collaborative Git workflows. Passionate about delivering high-quality banking and financial technology solutions.
+
+Experience:
+
+Software Engineer | FinTech Armenia, Yerevan
+June 2022 – Present
+- Develop and maintain critical backend services using Python (FastAPI) and JavaScript (Node.js).
+- Design and implement robust REST APIs for digital banking operations.
+- Collaborated with cross-functional teams to define features for a mobile banking app.
+- Write clean, well-documented, and unit-tested code ensuring 95% coverage.
+- Optimized database performance, reducing SQL query latency by 30%.
+- Actively participate in code reviews and advocate for engineering best practices.
+- Managed version control and CI/CD pipelines using Git.
+
+Junior Software Engineer | TechSolutions LLC, Yerevan
+May 2020 – May 2022
+- Contributed to the development of web applications using JavaScript and Python.
+- Built and consumed REST APIs for internal data management tools.
+- Worked extensively with relational databases (PostgreSQL) and wrote complex SQL queries.
+- Participated in Agile development cycles and Git-based collaborative workflows.
+
+Skills:
+- Languages: Python, JavaScript, SQL
+- Technologies: REST APIs, FastAPI, Node.js, Git
+- Databases: PostgreSQL, MySQL
+- Other: Performance Optimization, Code Review, Problem-solving
+
+Education:
+B.S. in Computer Science | Yerevan State University
