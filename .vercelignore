@@ -1,0 +1,12 @@
+app/
+alembic/
+tests/
+scripts/
+logs/
+pyproject.toml
+uv.lock
+Dockerfile
+docker-compose.yml
+docker-compose.prod.yml
+*.py
+*.ini

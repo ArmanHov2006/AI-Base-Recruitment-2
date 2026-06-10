@@ -1,0 +1,62 @@
+.env
+.env.local
+.env.*.local
+*.env.local
+
+# Claude Code local-only settings
+.claude/settings.local.json
+
+# Personal working notes (planning docs, drafts)
+personal/
+
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+build/
+dist/
+
+node_modules/
+dist/
+.vite/
+
+.DS_Store
+Thumbs.db
+
+*.log
+logs/
+
+.vscode/
+.idea/
+*.swp
+
+/personal/*
+
+# Local dev SQLite (never commit)
+app.db
+app.db-journal
+
+# Claude Code working dir (settings, worktrees, plans)
+.claude/
+
+# Graphify knowledge graph (generated artifact)
+graphify-out/
+
+# Celery beat schedule files
+celerybeat-schedule*
+
+# Debug/QA screenshots at repo root only
+/*.png
+
+# Tool working directories
+.context/
+.playwright-mcp/
+
+# MinIO binary (local dev only)
+minio.exe
+.gstack/
