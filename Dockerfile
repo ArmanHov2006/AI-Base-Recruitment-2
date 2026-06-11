@@ -11,8 +11,7 @@ COPY app ./app
 COPY alembic ./alembic
 COPY alembic.ini .
 
-RUN groupadd --system appuser && useradd --system --gid appuser appuser \
-    && chown -R appuser:appuser /app
+RUN useradd -r -u 1001 appuser && chown -R appuser /app
 USER appuser
 
 EXPOSE 8000
