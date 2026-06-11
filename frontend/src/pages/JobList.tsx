@@ -21,7 +21,7 @@ import {
   ThunderboltOutlined,
 } from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { listJobs, createJob, deleteJob, generateJobDescription } from '../api/jobs';
 import type { JobResponse, CreateJobRequest } from '../types';
 import type { ColumnsType } from 'antd/es/table';
@@ -61,6 +61,7 @@ export default function JobList() {
 
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -69,6 +70,13 @@ export default function JobList() {
       window.history.replaceState({}, '');
     }
   }, [location.state]);
+
+  useEffect(() => {
+    if (searchParams.get('create') === 'true') {
+      setCreateModalOpen(true);
+      setSearchParams({}, { replace: true });
+    }
+  }, []);
 
   const { data: jobs = [], isLoading } = useQuery({
     queryKey: ['jobs'],
