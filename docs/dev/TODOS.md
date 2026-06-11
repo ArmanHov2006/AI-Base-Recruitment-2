@@ -44,11 +44,11 @@ page rendering a grid of health cards.
 for compliance with Armenia's Law on Personal Data Protection (2015) and GDPR Article 22
 (automated decision-making). Specifically: role-restrict access to reasoning text (admin/HR manager
 only?), add view audit logging to BusinessEvent when a recruiter reads a candidate's reasoning,
-and document the legal basis for automated scoring in Ardshinbank's data processing records.
+and document the legal basis for automated scoring in AI_Based_recruitment's data processing records.
 **Why:** The reasoning field contains free-text AI assessments about individual candidates used
 in hiring decisions. Bank HR tools are typically subject to employment law compliance review.
 Absence of view logs for automated decision explanations could be a finding in a data audit.
-**Depends on:** feat/role-analytics merging. Legal review by Ardshinbank's DPO.
+**Depends on:** feat/role-analytics merging. Legal review by AI_Based_recruitment's DPO.
 **Where to start:** `app/comparisons/schemas.py` LeaderboardEntry — add role-based field filtering.
 `app/jobs/router.py` get_job_leaderboard — log `CANDIDATE_REASONING_VIEWED` business event.
 **Effort:** M (human ~2d / CC ~15min for technical work, plus legal review timeline)

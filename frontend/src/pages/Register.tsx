@@ -62,7 +62,7 @@ export default function Register() {
   return (
     <AuthLayout
       title="Create account"
-      subtitle="Set up your Ardshinbank recruitment workspace access."
+      subtitle="Set up your AI_Based_recruitment recruitment workspace access."
       formLabel="Create account"
     >
       {inviteToken && (
@@ -103,7 +103,7 @@ export default function Register() {
                 rules={[{ required: true, type: 'email', message: 'Valid email required' }]}
               >
                 <Input
-                  placeholder="you@ardshinbank.am"
+                  placeholder="you@airecruitment.com"
                   disabled={!!inviteEmail}
                 />
               </Form.Item>

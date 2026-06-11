@@ -1,7 +1,7 @@
 """Create the first ADMIN user — bypasses email verification.
 
 Usage:
-    uv run python scripts/create_admin.py --email admin@ardshinbank.am --password <pass>
+    uv run python scripts/create_admin.py --email admin@airecruitment.com --password <pass>
 """
 import argparse
 import asyncio

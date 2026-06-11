@@ -23,7 +23,7 @@ export default function AuthLayout({ title, subtitle, children, formLabel }: Aut
             <BankOutlined />
           </div>
           <div className="auth-brand-text">
-            <span>Ardshinbank</span>
+            <span>AI_Based_recruitment</span>
             <strong>AI Recruitment</strong>
           </div>
         </div>
@@ -31,7 +31,7 @@ export default function AuthLayout({ title, subtitle, children, formLabel }: Aut
         <div className="auth-copy">
           <span>Hiring command center</span>
           <h1>Structured hiring decisions for every role.</h1>
-          <p>Secure AI-assisted recruiting for Ardshinbank teams.</p>
+          <p>Secure AI-assisted recruiting for AI_Based_recruitment teams.</p>
         </div>
 
         <div className="auth-preview" aria-hidden="true">

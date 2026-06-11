@@ -2,14 +2,14 @@
 
 **Status:** Approved, ready to build
 **Date:** 2026-06-03
-**Owner:** Arman (Ardshinbank)
+**Owner:** Arman (AI_Based_recruitment)
 **Audience:** A fresh build session. This document is self-contained — read it top to bottom, then execute the build order in §8. Do not relitigate the decisions in §3; they are locked.
 
 ---
 
 ## 1. Context
 
-Internal AI-powered recruitment platform for **Ardshinbank** (Armenia). Recruiters upload candidate resumes, the system parses them with an LLM, scores candidates against jobs, and supports search, comparison, evaluation, and a hiring pipeline.
+Internal AI-powered recruitment platform for **AI_Based_recruitment** (Armenia). Recruiters upload candidate resumes, the system parses them with an LLM, scores candidates against jobs, and supports search, comparison, evaluation, and a hiring pipeline.
 
 **This is an internal bank tool.** Not SaaS, not consumer-facing, not 1M+ scale. Finite candidate pool (hundreds–thousands). These constraints already drove the decisions below — honor them.
 
@@ -70,7 +70,7 @@ Modules registered in `app/main.py`: auth, users-admin, storage, parser, candida
 
 ### F2 — Azure AD OIDC SSO (D3)
 
-**Goal:** Recruiters sign in with Ardshinbank Microsoft accounts (Entra ID). Password login remains for break-glass admin, dev, and CI.
+**Goal:** Recruiters sign in with AI_Based_recruitment Microsoft accounts (Entra ID). Password login remains for break-glass admin, dev, and CI.
 
 **Approach:**
 - Add OIDC Authorization Code flow (with PKCE) against Azure AD. Use a standard lib (e.g. `authlib`).

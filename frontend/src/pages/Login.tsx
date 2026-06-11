@@ -50,7 +50,7 @@ export default function Login() {
   return (
     <AuthLayout
       title="Sign in"
-      subtitle="Access the Ardshinbank AI recruitment workspace."
+      subtitle="Access the AI_Based_recruitment AI recruitment workspace."
       formLabel="Sign in"
     >
       {error && (
@@ -92,7 +92,7 @@ export default function Login() {
         >
           <Input
             prefix={<MailOutlined />}
-            placeholder="you@ardshinbank.am"
+            placeholder="you@airecruitment.com"
             autoComplete="email"
           />
         </Form.Item>

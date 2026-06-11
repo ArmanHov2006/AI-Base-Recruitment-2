@@ -101,12 +101,12 @@ pdf("06_minimal_text.pdf", ["John. Developer. john@dev.io"])
 # 7. Special characters - Armenian / non-ASCII name
 pdf("07_special_chars.pdf", [
     "Armen Hakobyan",
-    "armen.hakobyan@ardshinbank.am | +374 55 123456 | Yerevan, Armenia",
+    "armen.hakobyan@airecruitment.com | +374 55 123456 | Yerevan, Armenia",
     "",
     "Senior Financial Analyst with 8 years in banking sector.",
     "",
     "Experience",
-    "Ardshinbank - Senior Analyst (2018-2025)",
+    "Acme Bank - Senior Analyst (2018-2025)",
     "HSBC Armenia - Analyst (2016-2018)",
     "",
     "Skills",
