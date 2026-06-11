@@ -23,16 +23,16 @@ EMAILS_TO_DELETE = [
     "hrmanager@test.local",
     "recruiter@test.local",
     "viewer@test.local",
-    "admin@ardshinbank.am",
+    "admin@airecruitment.com",
     "viewer@example.com",
     "recruiter@example.com",
     "admin@example.com",
     "hrmanager@example.com",
     "qa-admin@example.com",
-    "qa.viewer@ardshinbank.am",
-    "qa.hr@ardshinbank.am",
-    "qa.recruiter@ardshinbank.am",
-    "qa.admin@ardshinbank.am",
+    "qa.viewer@airecruitment.com",
+    "qa.hr@airecruitment.com",
+    "qa.recruiter@airecruitment.com",
+    "qa.admin@airecruitment.com",
 ]
 
 

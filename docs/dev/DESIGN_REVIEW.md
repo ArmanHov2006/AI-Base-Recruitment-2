@@ -3,7 +3,7 @@
 Date: 2026-05-22  
 Reviewer: /plan-design-review (gstack)  
 Branch: main  
-App type: APP UI (internal HR tool, Ardshinbank)  
+App type: APP UI (internal HR tool, AI_Based_recruitment)  
 Initial score: 5/10 → Final score: 7/10
 
 ---

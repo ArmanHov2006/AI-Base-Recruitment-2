@@ -278,7 +278,7 @@ export default function AdminUsers() {
             label="Email"
             rules={[{ required: true, type: 'email', message: 'Valid email required' }]}
           >
-            <Input placeholder="colleague@ardshinbank.am" />
+            <Input placeholder="colleague@airecruitment.com" />
           </Form.Item>
           <Form.Item
             name="role"

@@ -217,7 +217,7 @@ class TestSSOCallbackSuccess:
     ) -> None:
         """Known active user → access_token returned."""
         user = make_user(UserRole.RECRUITER)
-        user.email = "alice@ardshinbank.am"
+        user.email = "alice@airecruitment.com"
         mock_db = _make_mock_db_with_user(user)
 
         async def db_override() -> AsyncGenerator:
@@ -242,7 +242,7 @@ class TestSSOCallbackSuccess:
             return {"id_token": "fake.id.token"}
 
         async def mock_verify(id_token):
-            return "alice@ardshinbank.am"
+            return "alice@airecruitment.com"
 
         with (
             patch("app.auth_sso.settings") as mock_settings,
@@ -316,7 +316,7 @@ class TestSSOCallbackSuccess:
     ) -> None:
         """SSO email found but user inactive → 403."""
         user = make_user(UserRole.RECRUITER)
-        user.email = "inactive@ardshinbank.am"
+        user.email = "inactive@airecruitment.com"
         user.is_active = False
         mock_db = _make_mock_db_with_user(user)
 
@@ -333,7 +333,7 @@ class TestSSOCallbackSuccess:
             return {"id_token": "fake.id.token"}
 
         async def mock_verify(id_token):
-            return "inactive@ardshinbank.am"
+            return "inactive@airecruitment.com"
 
         with (
             patch("app.auth_sso.settings") as mock_settings,

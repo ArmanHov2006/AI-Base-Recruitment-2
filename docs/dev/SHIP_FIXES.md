@@ -979,7 +979,7 @@ The current README describes Sprint 1 state. Replace the body with:
 ```markdown
 # AI-Based Recruitment Platform
 
-AI-powered candidate management for Ardshinbank. Upload resumes → LLM parses → rank candidates per job → track through hiring pipeline.
+AI-powered candidate management for AI_Based_recruitment. Upload resumes → LLM parses → rank candidates per job → track through hiring pipeline.
 
 **Stack:** Python 3.12 · FastAPI · PostgreSQL 16 + pgvector · MinIO · Celery + Redis · React 18 · Ant Design · Vite · Docker
 

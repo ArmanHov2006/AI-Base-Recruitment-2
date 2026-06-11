@@ -30,12 +30,12 @@ async def notify_candidate_rejected(
     subject = f"Your application for {safe_title}"
     body = (
         f"Dear {safe_name},\n\n"
-        f"Thank you for applying for the {safe_title} position at Ardshinbank.\n\n"
+        f"Thank you for applying for the {safe_title} position at AI_Based_recruitment.\n\n"
         f"After careful review, we will not be moving forward with your application "
         f"at this time. We appreciate the time you invested and wish you the best "
         f"in your search.\n\n"
         f"Best regards,\n"
-        f"Ardshinbank Recruitment Team"
+        f"AI_Based_recruitment Recruitment Team"
     )
     await _send(to=candidate_email, subject=subject, html=f"<pre>{body}</pre>")
 

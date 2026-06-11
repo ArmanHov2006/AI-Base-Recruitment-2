@@ -47,7 +47,7 @@ async def send_invite_email(email_addr: str, token: str, role: str) -> None:
         subject="You've been invited to AI Recruitment",
         html=(
             f"<p>You've been invited as <strong>{role_label}</strong> to the "
-            f"Ardshinbank AI Recruitment platform.</p>"
+            f"AI_Based_recruitment AI Recruitment platform.</p>"
             f'<p>Click <a href="{link}">here</a> to register. '
             f"Link expires in {settings.invite_token_expire_hours} hours.</p>"
         ),

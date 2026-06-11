@@ -1,6 +1,6 @@
 # AI-Based Recruitment Platform
 
-AI-powered recruitment platform for Ardshinbank. Parses resumes with a local or cloud LLM, scores candidates against job descriptions, tracks hiring pipelines, and supports structured candidate comparison.
+AI-powered recruitment platform for AI_Based_recruitment. Parses resumes with a local or cloud LLM, scores candidates against job descriptions, tracks hiring pipelines, and supports structured candidate comparison.
 
 ## Stack
 

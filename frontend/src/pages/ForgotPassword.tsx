@@ -38,7 +38,7 @@ export default function ForgotPassword() {
             label="Email"
             rules={[{ required: true, type: 'email' }]}
           >
-            <Input placeholder="you@ardshinbank.am" />
+            <Input placeholder="you@airecruitment.com" />
           </Form.Item>
           <Button type="primary" htmlType="submit" loading={loading} block>
             Send reset link
