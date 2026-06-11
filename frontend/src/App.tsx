@@ -18,6 +18,7 @@ const RoleAnalytics = lazy(() => import('./pages/RoleAnalytics'));
 const AdminUsers = lazy(() => import('./pages/AdminUsers'));
 const AuditLog = lazy(() => import('./pages/AuditLog'));
 const NotificationsPage = lazy(() => import('./pages/NotificationsPage'));
+const Notifications = lazy(() => import('./pages/Notifications'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
@@ -132,7 +133,7 @@ export default function App() {
                 <Route path="analytics" element={<Analytics />} />
                 <Route path="admin/users" element={<AdminUsers />} />
                 <Route path="admin/audit" element={<AuditLog />} />
-                <Route path="notifications" element={<NotificationsPage />} />
+                <Route path="notifications" element={<Notifications />} />
                 <Route
                   path="*"
                   element={

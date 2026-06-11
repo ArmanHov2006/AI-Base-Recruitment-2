@@ -12,22 +12,16 @@ import {
   AppstoreOutlined,
   UserOutlined,
   SolutionOutlined,
-  ProjectOutlined,
   SearchOutlined,
   BellOutlined,
   PlusOutlined,
   LogoutOutlined,
   UserSwitchOutlined,
   AuditOutlined,
-  FileAddOutlined,
-  StarOutlined,
-  CommentOutlined,
-  SafetyCertificateOutlined,
-  LockOutlined,
 } from '@ant-design/icons';
 import { useAuth } from '../../context/AuthContext';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { getNotifications, markAllRead as markAllNotificationsRead } from '../../api/notifications';
+import { getNotifications, markRead as markNotificationRead, markAllRead as markAllNotificationsRead } from '../../api/notifications';
 import type { Notification } from '../../types';
 import CommandPalette from '../CommandPalette';
 
@@ -46,7 +40,6 @@ const BASE_NAV: NavItem[] = [
   { key: '/analytics', icon: <AppstoreOutlined />, label: 'Overview' },
   { key: '/', icon: <UserOutlined />, label: 'Candidates' },
   { key: '/jobs', icon: <SolutionOutlined />, label: 'Jobs' },
-  { key: '/pipeline', icon: <ProjectOutlined />, label: 'Pipeline' },
 ];
 
 const ADMIN_NAV: NavItem[] = [
@@ -110,60 +103,30 @@ function avatarBg(name?: string | null): string {
   return AVATAR_COLORS[sum % AVATAR_COLORS.length];
 }
 
+const NOTIF_ICONS: Record<string, string> = {
+  new_application: '📥',
+  stage_change: '↕',
+  rating_update: '⭐',
+  mention: '@',
+};
+
+function getNotifIcon(type: string): string {
+  return NOTIF_ICONS[type] ?? '🔔';
+}
+
 function formatNotifTitle(n: Notification): string {
-  const p = n.payload as Record<string, unknown>;
+  const p = n.payload as Record<string, string>;
   if (n.type === 'new_application') return `New application for "${p.job_title ?? 'a job'}"`;
   if (n.type === 'stage_change') {
-    return `${p.candidate_name ?? 'Candidate'} moved to ${p.new_stage ?? '?'} — ${p.job_title ?? ''}`;
+    return `Stage → ${p.new_stage ?? '?'} for ${p.candidate_name ?? 'candidate'} (${p.job_title ?? ''})`;
   }
   if (n.type === 'rating_update') {
     return `Rating submitted for ${p.candidate_name ?? 'candidate'} — ${p.job_title ?? ''}`;
   }
-  if (n.type === 'mention') return 'You were mentioned in a candidate note';
-  if (n.type === 'role_changed') {
-    return `Your role was changed from ${p.old_role ?? '?'} to ${p.new_role ?? '?'} by ${p.changed_by ?? 'admin'}`;
+  if (n.type === 'mention') {
+    return `${p.mentioned_by_name ?? 'Someone'} mentioned you on ${p.candidate_name ?? 'a candidate'}`;
   }
-  if (n.type === 'account_status_changed') {
-    const active = p.is_active === true || p.is_active === 'true';
-    return `Your account was ${active ? 'activated' : 'deactivated'} by ${p.changed_by ?? 'admin'}`;
-  }
-  if (n.type === 'interview_scheduled') {
-    let when = '';
-    if (p.interview_scheduled_at) {
-      const d = new Date(p.interview_scheduled_at as string);
-      when = isNaN(d.getTime()) ? '' : d.toLocaleString();
-    }
-    return `Interview scheduled for ${p.candidate_name ?? 'candidate'}${when ? ` — ${when}` : ''}`;
-  }
-  if (n.type === 'interview_reminder') {
-    let when = '';
-    if (p.interview_scheduled_at) {
-      const d = new Date(p.interview_scheduled_at as string);
-      when = isNaN(d.getTime()) ? '' : d.toLocaleString();
-    }
-    return `Interview reminder: ${p.candidate_name ?? 'candidate'}${when ? ` at ${when}` : ''}`;
-  }
-  return n.type.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
-function notifIcon(type: string): React.ReactNode {
-  if (type === 'new_application') return <FileAddOutlined style={{ color: '#5b6af5', fontSize: 15 }} />;
-  if (type === 'stage_change') return <ProjectOutlined style={{ color: '#fbbf24', fontSize: 15 }} />;
-  if (type === 'rating_update') return <StarOutlined style={{ color: '#34d399', fontSize: 15 }} />;
-  if (type === 'mention') return <CommentOutlined style={{ color: '#a855f7', fontSize: 15 }} />;
-  if (type === 'role_changed') return <SafetyCertificateOutlined style={{ color: '#f97316', fontSize: 15 }} />;
-  if (type === 'account_status_changed') return <LockOutlined style={{ color: '#f87171', fontSize: 15 }} />;
-  if (type === 'interview_scheduled' || type === 'interview_reminder') return <ProjectOutlined style={{ color: '#34d399', fontSize: 15 }} />;
-  return <BellOutlined style={{ color: '#a1a1bb', fontSize: 15 }} />;
-}
-
-function notifNavTarget(n: Notification): string | null {
-  const p = n.payload as Record<string, string>;
-  if (n.type === 'mention' && p.candidate_id) return `/candidates/${p.candidate_id}`;
-  if ((n.type === 'stage_change' || n.type === 'rating_update') && p.candidate_id) {
-    return `/candidates/${p.candidate_id}`;
-  }
-  return null;
+  return n.type;
 }
 
 function formatRelativeTime(isoStr: string): string {
@@ -174,6 +137,15 @@ function formatRelativeTime(isoStr: string): string {
   const h = Math.floor(m / 60);
   if (h < 24) return `${h}h ago`;
   return `${Math.floor(h / 24)}d ago`;
+}
+
+function getNotifLink(n: Notification): string | null {
+  const p = n.payload as Record<string, string>;
+  if (n.type === 'new_application' && p.job_id) return `/jobs/${p.job_id}`;
+  if (n.type === 'stage_change' && p.candidate_id) return `/candidates/${p.candidate_id}`;
+  if (n.type === 'rating_update' && p.candidate_id) return `/candidates/${p.candidate_id}`;
+  if (n.type === 'mention' && p.candidate_id) return `/candidates/${p.candidate_id}`;
+  return null;
 }
 
 export default function AppLayout() {
@@ -282,12 +254,21 @@ export default function AppLayout() {
     navigate('/login', { replace: true });
   };
 
-  const handleNotifClick = (item: Notification) => {
-    const target = notifNavTarget(item);
-    if (target) {
-      setNotifOpen(false);
-      navigate(target);
+  const handleNotifClick = async (item: Notification) => {
+    setNotifOpen(false);
+    if (!item.read_at) {
+      try {
+        await markNotificationRead(item.id);
+        setNotifications((prev) =>
+          prev.map((n) => (n.id === item.id ? { ...n, read_at: new Date().toISOString() } : n)),
+        );
+        setUnreadCount((c) => Math.max(0, c - 1));
+      } catch {
+        // non-fatal — UI already closed
+      }
     }
+    const link = getNotifLink(item);
+    if (link) navigate(link);
   };
 
   const userMenuContent = (
@@ -312,52 +293,55 @@ export default function AppLayout() {
   );
 
   const notifPanelContent = (
-    <div className="notification-panel">
+    <div className="notification-panel" style={{ width: 340, maxHeight: 420, overflowY: 'auto' }}>
       <List
         size="small"
         dataSource={notifications}
         locale={{ emptyText: 'No notifications' }}
-        renderItem={(item) => {
-          const target = notifNavTarget(item);
-          return (
-            <List.Item
-              className={`notification-item${item.read_at ? '' : ' is-unread'}`}
-              onClick={() => handleNotifClick(item)}
-              style={{ cursor: target ? 'pointer' : 'default' }}
-            >
-              <List.Item.Meta
-                avatar={<span style={{ display: 'flex', alignItems: 'center', paddingTop: 2 }}>{notifIcon(item.type)}</span>}
-                title={
-                  <span style={{ fontSize: 13, fontWeight: item.read_at ? 500 : 800 }}>
-                    {formatNotifTitle(item)}
-                  </span>
-                }
-                description={
-                  <span style={{ fontSize: 12, color: '#64648a' }}>
-                    {formatRelativeTime(item.created_at)}
-                  </span>
-                }
-              />
-            </List.Item>
-          );
-        }}
+        renderItem={(item) => (
+          <List.Item
+            className={`notification-item${item.read_at ? '' : ' is-unread'}`}
+            onClick={() => handleNotifClick(item)}
+            style={{ cursor: getNotifLink(item) ? 'pointer' : 'default' }}
+          >
+            <List.Item.Meta
+              avatar={
+                <span style={{ fontSize: 14, opacity: item.read_at ? 0.5 : 1 }}>
+                  {getNotifIcon(item.type)}
+                </span>
+              }
+              title={
+                <span style={{ fontSize: 13, fontWeight: item.read_at ? 500 : 700 }}>
+                  {formatNotifTitle(item)}
+                </span>
+              }
+              description={
+                <span style={{ fontSize: 12, color: '#64648a' }}>
+                  {formatRelativeTime(item.created_at)}
+                </span>
+              }
+            />
+          </List.Item>
+        )}
       />
-      <div
-        style={{
-          padding: '8px 12px',
-          borderTop: '1px solid rgba(255,255,255,0.07)',
-          textAlign: 'center',
-        }}
-      >
-        <Button
-          type="link"
-          size="small"
-          onClick={() => { setNotifOpen(false); navigate('/notifications'); }}
-          style={{ color: '#5b6af5', fontSize: 12 }}
+      {notifications.length > 0 && (
+        <div
+          style={{
+            padding: '8px 12px',
+            borderTop: '1px solid rgba(255,255,255,0.07)',
+            textAlign: 'center',
+          }}
         >
-          View all notifications
-        </Button>
-      </div>
+          <Button
+            type="link"
+            size="small"
+            style={{ fontSize: 12, color: '#5b6af5' }}
+            onClick={() => { setNotifOpen(false); navigate('/notifications'); }}
+          >
+            See all notifications
+          </Button>
+        </div>
+      )}
     </div>
   );
 
@@ -431,7 +415,7 @@ export default function AppLayout() {
                 type="primary"
                 icon={<PlusOutlined />}
                 className="header-cta-btn"
-                onClick={() => navigate('/jobs', { state: { openCreate: true } })}
+                onClick={() => navigate('/jobs?create=true')}
                 aria-label="New role"
               >
                 New role
