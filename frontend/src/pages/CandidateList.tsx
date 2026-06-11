@@ -27,12 +27,12 @@ import type { ColumnsType } from 'antd/es/table';
 
 const PAGE_SIZE = 20;
 
-const STAGE_FILTERS = [
-  { label: 'All', value: undefined as string | undefined },
+const STAGE_FILTERS: { label: string; value: string | undefined }[] = [
+  { label: 'All', value: undefined },
   { label: 'Active', value: 'active' },
   { label: 'Hired', value: 'hired' },
   { label: 'Archived', value: 'archived' },
-] as const;
+];
 
 const LEVEL_FILTERS = [
   { label: 'All levels', value: undefined as string | undefined },
@@ -118,7 +118,7 @@ export default function CandidateList() {
   const [searchText, setSearchText] = useState('');
   const [skills] = useState<string[]>([]);
   const [seniority, setSeniority] = useState<string | undefined>(undefined);
-  const [stageFilter, setStageFilter] = useState<string | undefined>(undefined);
+  const [statusFilter, setStatusFilter] = useState<string | undefined>(undefined);
   const [page, setPage] = useState(1);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
 
@@ -132,11 +132,11 @@ export default function CandidateList() {
       q: debouncedQ || undefined,
       skills: skills.length > 0 ? skills : undefined,
       seniority: seniority || undefined,
-      status: stageFilter,
+      status: statusFilter,
       page,
       size: PAGE_SIZE,
     }),
-    [debouncedQ, skills, seniority, stageFilter, page],
+    [debouncedQ, skills, seniority, statusFilter, page],
   );
 
   const { data, isFetching, isLoading } = useQuery({
@@ -157,7 +157,7 @@ export default function CandidateList() {
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedQ, skills, seniority, stageFilter]);
+  }, [debouncedQ, skills, seniority, statusFilter]);
 
   const handleRowClick = (record: CandidateResponse) => {
     navigate(`/candidates/${record.id}`);
@@ -354,8 +354,8 @@ export default function CandidateList() {
             <button
               key={f.label}
               type="button"
-              className={`clist-pill${stageFilter === f.value ? ' is-active' : ''}`}
-              onClick={() => setStageFilter(stageFilter === f.value ? undefined : f.value)}
+              className={`clist-pill${statusFilter === f.value ? ' is-active' : ''}`}
+              onClick={() => setStatusFilter(f.value)}
             >
               {f.label}
             </button>
