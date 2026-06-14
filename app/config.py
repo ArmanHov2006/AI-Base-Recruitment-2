@@ -49,6 +49,7 @@ class Settings(BaseSettings):
 
     allowed_origins: list[str] = ["http://localhost:3000", "http://localhost:5173"]
     max_upload_bytes: int = 10 * 1024 * 1024
+    max_video_upload_bytes: int = 150 * 1024 * 1024
     presigned_url_ttl_seconds: int = 300
 
     redis_url: str = "redis://localhost:6379/0"

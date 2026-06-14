@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
+import app.interviews.models  # noqa: F401 — register InterviewSession/InterviewAnswer with SQLAlchemy Base
 import app.resumes.models  # noqa: F401 — register CandidateResume with SQLAlchemy Base
 from app.ai.router import router as ai_router
 from app.analytics.router import router as analytics_router
@@ -20,6 +21,7 @@ from app.config import settings
 from app.database import engine
 from app.evaluations.router import router as evaluations_router
 from app.gdpr.router import router as gdpr_router
+from app.interviews.router import router as interviews_router
 from app.jobs.router import router as jobs_router
 from app.limiter import limiter
 from app.llm import get_llm_client
@@ -86,6 +88,7 @@ app.include_router(analytics_router)
 app.include_router(audit_router)
 app.include_router(ai_router)
 app.include_router(gdpr_router)
+app.include_router(interviews_router)
 
 
 @app.get("/healthz")

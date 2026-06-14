@@ -23,6 +23,7 @@ const Register = lazy(() => import('./pages/Register'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const VerifyEmail = lazy(() => import('./pages/VerifyEmail'));
+const InterviewSession = lazy(() => import('./pages/InterviewSession'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -110,6 +111,7 @@ export default function App() {
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/verify-email" element={<VerifyEmail />} />
+              <Route path="/interview/:sessionId" element={<InterviewSession />} />
 
               {/* Protected routes */}
               <Route
