@@ -30,3 +30,22 @@ class InterviewAnswerRead(BaseModel):
     attempt_consumed_at: datetime | None
 
     model_config = {"from_attributes": True}
+
+
+# Lane A schemas — presigned upload and attempt-lock
+
+
+class UploadUrlRequest(BaseModel):
+    content_type: str
+
+
+class UploadUrlResponse(BaseModel):
+    url: str
+    fields: dict[str, str]
+    file_id: str
+
+
+class StartAttemptResponse(BaseModel):
+    session_id: uuid.UUID
+    question_index: int
+    attempt_consumed_at: datetime
