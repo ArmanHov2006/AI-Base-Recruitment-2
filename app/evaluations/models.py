@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime
 
+import sqlalchemy as sa
 from sqlalchemy import DateTime, ForeignKey, Index, Integer, String, Text, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
@@ -13,14 +14,23 @@ class CandidateEvaluation(Base):
     __table_args__ = (
         Index("ix_ce_candidate_job", "candidate_id", "job_id"),
         UniqueConstraint(
-            "candidate_id", "job_id", "evaluator_id", "stage",
+            "candidate_id",
+            "job_id",
+            "evaluator_id",
+            "stage",
             name="uq_ce_candidate_job_evaluator_stage",
+        ),
+        Index(
+            "ix_ce_ai_interview_unique",
+            "candidate_id",
+            "job_id",
+            "stage",
+            unique=True,
+            postgresql_where=sa.text("stage = 'ai_interview' AND deleted_at IS NULL"),
         ),
     )
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     candidate_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("candidates.id", ondelete="CASCADE"), nullable=False, index=True
     )
@@ -29,6 +39,9 @@ class CandidateEvaluation(Base):
     )
     evaluator_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    interview_session_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("interview_sessions.id", ondelete="SET NULL"), nullable=True, index=True
     )
 
     stage: Mapped[str] = mapped_column(String(30), nullable=False)
@@ -43,12 +56,8 @@ class CandidateEvaluation(Base):
     feedback: Mapped[str | None] = mapped_column(Text, nullable=True)
     ai_suggested_rating: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
     )
-    deleted_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True, default=None
-    )
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, default=None)
