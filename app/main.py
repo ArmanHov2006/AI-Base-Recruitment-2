@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
+import app.interviews.models  # noqa: F401 — register InterviewSession/InterviewAnswer with Base
 import app.resumes.models  # noqa: F401 — register CandidateResume with SQLAlchemy Base
 from app.ai.router import router as ai_router
 from app.analytics.router import router as analytics_router
