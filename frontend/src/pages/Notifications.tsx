@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { List, Button, Badge, Empty } from 'antd';
 import { BellOutlined } from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -45,7 +44,6 @@ function timeAgo(iso: string): string {
 export default function Notifications() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [page] = useState(1);
 
   const { data, isLoading } = useQuery({
     queryKey: ['notifications', 'all'],

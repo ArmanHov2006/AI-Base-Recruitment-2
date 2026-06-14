@@ -17,7 +17,6 @@ const Analytics = lazy(() => import('./pages/Analytics'));
 const RoleAnalytics = lazy(() => import('./pages/RoleAnalytics'));
 const AdminUsers = lazy(() => import('./pages/AdminUsers'));
 const AuditLog = lazy(() => import('./pages/AuditLog'));
-const NotificationsPage = lazy(() => import('./pages/NotificationsPage'));
 const Notifications = lazy(() => import('./pages/Notifications'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
