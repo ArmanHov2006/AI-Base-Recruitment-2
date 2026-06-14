@@ -9,7 +9,13 @@ from pydantic import ValidationError
 
 from app.config import settings
 from app.llm.base import LLMParseError, LLMTimeoutError, ScoringResult, TiebreakerResult, VerdictResult
-from app.llm.rubric import aggregate, apply_local_bonus, tiers_to_dimension_points
+from app.llm.rubric import (
+    aggregate,
+    aggregate_interview,
+    apply_local_bonus,
+    interview_tiers_to_points,
+    tiers_to_dimension_points,
+)
 from app.parser.schemas import CandidateData
 
 _EXTRACT_PROMPT = """\
@@ -278,6 +284,49 @@ Description: {job_description}
 {candidates_block}
 """
 
+_INTERVIEW_SCORE_PROMPT = """\
+You are a senior technical interviewer evaluating a candidate's interview performance.
+Return ONLY valid JSON — no markdown, no extra text.
+
+For each dimension, pick EXACTLY ONE tier label from this set:
+"excellent", "strong", "partial", "weak", "none".
+Do NOT output numbers. Do NOT output an "overall_score" — a downstream system
+computes the final score from your tiers.
+
+The four dimensions to rate:
+- technical_accuracy: correctness of technical claims, depth of knowledge, absence of factual errors
+- answer_relevance: how directly and completely the answers address the questions asked
+- problem_structure: logical organisation, use of frameworks (STAR, etc.), clarity of explanation
+- communication: fluency, conciseness, confidence, professionalism of expression
+
+Return this exact JSON structure:
+{{
+  "dimension_scores": {{
+    "technical_accuracy": "<tier>",
+    "answer_relevance": "<tier>",
+    "problem_structure": "<tier>",
+    "communication": "<tier>"
+  }},
+  "ai_suggested_rating": <integer 1-5>,
+  "reasoning": "<3-5 sentences: name the strongest signal, the biggest gap, and one concrete hire/pass recommendation>"
+}}
+
+Rules:
+- ai_suggested_rating: 1=poor fit, 2=weak, 3=meets bar, 4=strong, 5=exceptional
+- Weights are applied DOWNSTREAM — classify each dimension honestly and independently
+- Reserve "excellent" for genuinely standout interview performance with clear evidence
+- "partial" means the candidate tried but fell short on depth or completeness
+- "none" means the candidate could not address the topic at all
+
+--- JOB ---
+Title: {job_title}
+Required skills: {required_skills}
+Description: {job_description}
+
+--- INTERVIEW TRANSCRIPT ---
+{transcript}
+"""
+
 _COMPARE_PROMPT = """\
 You are a senior recruitment specialist performing a structured comparative analysis \
 of candidates for a job opening.
@@ -442,9 +491,7 @@ class OllamaClient:
             raise LLMTimeoutError(f"LLM timed out after {settings.llm_timeout_seconds}s") from exc
         return response.message.content or ""
 
-    async def chat_stream(
-        self, system_prompt: str, user_message: str
-    ) -> AsyncGenerator[str, None]:
+    async def chat_stream(self, system_prompt: str, user_message: str) -> AsyncGenerator[str, None]:
         """Stream a free-form chat answer token-by-token (no JSON format)."""
         stream = await self._client.chat(
             model=settings.ollama_model,
@@ -534,9 +581,7 @@ class OllamaClient:
         required_skills: list[str],
         required_seniority: str | None = None,
     ) -> dict:
-        candidates_block = "\n\n".join(
-            _candidate_block(label, data) for label, data in candidates
-        )
+        candidates_block = "\n\n".join(_candidate_block(label, data) for label, data in candidates)
 
         prompt = _COMPARE_PROMPT.format(
             job_title=job_title,
@@ -566,15 +611,11 @@ class OllamaClient:
             score = scores.get(label, "?")
             dims = (dimension_scores or {}).get(label)
             if dims:
-                dim_str = "  " + " | ".join(
-                    f"{k.replace('_', ' ')}: {v}" for k, v in dims.items()
-                )
+                dim_str = "  " + " | ".join(f"{k.replace('_', ' ')}: {v}" for k, v in dims.items())
                 return f"{label} — overall: {score}\n{dim_str}"
             return f"{label} — overall: {score} | {data.summary or 'no summary'}"
 
-        candidates_block = "\n\n".join(
-            _candidate_line(label, data) for label, data in candidates
-        )
+        candidates_block = "\n\n".join(_candidate_line(label, data) for label, data in candidates)
         prompt = _VERDICT_PROMPT.format(
             job_title=job_title,
             required_seniority=required_seniority or "not specified",
@@ -642,9 +683,7 @@ class OllamaClient:
         dimensions: list[str],
         slots_remaining: int,
     ) -> TiebreakerResult:
-        candidates_block = "\n\n".join(
-            _candidate_block(name, data) for (_, name, data) in candidates
-        )
+        candidates_block = "\n\n".join(_candidate_block(name, data) for (_, name, data) in candidates)
         dimensions_block = "\n".join(f"- {d}" for d in dimensions)
         prompt = _TIEBREAKER_PROMPT.format(
             slots_remaining=slots_remaining,
@@ -676,7 +715,7 @@ class OllamaClient:
     ) -> dict:
         prompt = (
             "You are a recruitment assistant. Split the provided skills into 'technical' and 'soft' categories.\n"
-            "Return ONLY valid JSON: {\"technical\": [...], \"soft\": [...]}.\n\n"
+            'Return ONLY valid JSON: {"technical": [...], "soft": [...]}.\n\n'
             "Rules:\n"
             "- Normalize to lowercase and deduplicate (JS and JavaScript → keep one as 'javascript')\n"
             "- technical: programming languages, frameworks, tools, platforms, databases, cloud services, methodologies (e.g. Agile, Scrum)\n"
@@ -685,9 +724,9 @@ class OllamaClient:
             "'DevOps' → technical; 'Data Analysis' → technical; 'Problem Solving' → soft\n\n"
             "Examples:\n"
             "Skills: Python, React, Communication, Docker, Leadership, SQL, Teamwork\n"
-            "Output: {\"technical\": [\"python\", \"react\", \"docker\", \"sql\"], \"soft\": [\"communication\", \"leadership\", \"teamwork\"]}\n\n"
+            'Output: {"technical": ["python", "react", "docker", "sql"], "soft": ["communication", "leadership", "teamwork"]}\n\n'
             "Skills: Excel, Agile, Presentation Skills, AWS, Negotiation, Jira\n"
-            "Output: {\"technical\": [\"excel\", \"agile\", \"aws\", \"jira\"], \"soft\": [\"presentation skills\", \"negotiation\"]}\n\n"
+            'Output: {"technical": ["excel", "agile", "aws", "jira"], "soft": ["presentation skills", "negotiation"]}\n\n'
             f"Title: {title}\n"
             f"Description: {description or 'not provided'}\n"
             f"Skills to split: {', '.join(existing_skills) if existing_skills else 'none — infer from title and description'}\n"
@@ -733,6 +772,48 @@ class OllamaClient:
         except (ValueError, TypeError, KeyError) as exc:
             raise LLMParseError(f"LLM returned invalid job description data: {exc}") from exc
 
+    async def score_interview(
+        self,
+        transcript: str,
+        job_title: str,
+        job_description: str | None,
+        required_skills: list[str],
+    ) -> ScoringResult:
+        """Classify interview transcript into per-dimension tiers, then aggregate deterministically.
+
+        The prompt elicits tier labels only — weights live in rubric.py, not here.
+        Raises LLMParseError on missing/garbage output.
+        """
+        if not transcript or not transcript.strip():
+            raise LLMParseError("Empty transcript — cannot score interview")
+        prompt = _INTERVIEW_SCORE_PROMPT.format(
+            job_title=job_title,
+            required_skills=", ".join(required_skills) if required_skills else "not specified",
+            job_description=job_description or "not provided",
+            transcript=transcript,
+        )
+        raw = await self._chat(prompt)
+        try:
+            data = json.loads(raw)
+            tiers = data["dimension_scores"]
+            if not isinstance(tiers, dict):
+                raise LLMParseError("dimension_scores is not a dict")
+            dimension_points = interview_tiers_to_points(tiers)
+            overall_score = aggregate_interview(dimension_points)
+            ai_suggested_rating = data.get("ai_suggested_rating")
+            if not isinstance(ai_suggested_rating, int) or not (1 <= ai_suggested_rating <= 5):
+                # Clamp/default rather than hard-fail for this optional field
+                ai_suggested_rating = max(1, min(5, int(overall_score / 20 + 0.5)))
+            return ScoringResult(
+                overall_score=overall_score,
+                dimension_scores={**dimension_points, "ai_suggested_rating": ai_suggested_rating},
+                reasoning=str(data.get("reasoning", "")),
+            )
+        except LLMParseError:
+            raise
+        except (KeyError, ValueError, TypeError) as exc:
+            raise LLMParseError(f"LLM returned invalid interview scoring data: {exc}") from exc
+
     async def suggest_interview_questions(
         self,
         candidate: CandidateData,
@@ -743,7 +824,7 @@ class OllamaClient:
         prompt = (
             "You are a senior technical recruiter. Given the candidate profile and job requirements below, "
             "suggest 5 targeted interview questions that will reveal fit or gaps.\n"
-            "Return ONLY valid JSON: {\"questions\": [\"question 1\", \"question 2\", \"question 3\", \"question 4\", \"question 5\"]}\n\n"
+            'Return ONLY valid JSON: {"questions": ["question 1", "question 2", "question 3", "question 4", "question 5"]}\n\n'
             f"--- JOB ---\n"
             f"Title: {job_title}\n"
             f"Required skills: {', '.join(required_skills) if required_skills else 'not specified'}\n"

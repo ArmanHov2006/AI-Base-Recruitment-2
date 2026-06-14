@@ -80,3 +80,11 @@ class LLMClient(Protocol):
         dimensions: list[str],
         slots_remaining: int,
     ) -> TiebreakerResult: ...
+
+    async def score_interview(
+        self,
+        transcript: str,
+        job_title: str,
+        job_description: str | None,
+        required_skills: list[str],
+    ) -> ScoringResult: ...

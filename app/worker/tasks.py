@@ -652,3 +652,46 @@ async def _slack_daily_summary() -> dict:
 @celery_app.task(name="slack.daily_summary")
 def slack_daily_summary_task() -> dict:
     return asyncio.run(_slack_daily_summary())
+
+
+# ---------------------------------------------------------------------------
+# Interview transcription + scoring (Lane B)
+# ---------------------------------------------------------------------------
+
+@celery_app.task(
+    name="interview.transcribe_and_score",
+    bind=True,
+    # Transient errors (S3Error, subprocess.TimeoutExpired, OSError) are retried.
+    # Permanent errors (LLMParseError, FileValidationError, ValueError) are NOT
+    # retried — the pipeline marks session.status="failed" and re-raises; the
+    # except block below skips self.retry so those propagate immediately.
+    autoretry_for=(Exception,),
+    retry_backoff=True,
+    max_retries=3,
+)
+def transcribe_and_score_task(self, session_id: str) -> None:
+    """Sync Celery wrapper: download → STT → LLM score → upsert CandidateEvaluation."""
+    from app.llm.base import LLMParseError as _LLMParseError
+    from app.storage.validator import FileValidationError as _FileValidationError
+
+    _PERMANENT = (_LLMParseError, _FileValidationError, ValueError)
+
+    try:
+        import uuid as _uuid
+        from app.worker.interview import transcribe_and_score
+        asyncio.run(transcribe_and_score(_uuid.UUID(session_id)))
+    except _PERMANENT as exc:
+        # Permanent failure — do NOT retry; let Celery mark the task as failed.
+        log.error(
+            "interview.transcribe_and_score.permanent_failure",
+            session_id=session_id,
+            error=str(exc),
+        )
+        raise
+    except Exception as exc:
+        log.warning(
+            "interview.transcribe_and_score.transient_retry",
+            session_id=session_id,
+            error=str(exc),
+        )
+        raise
