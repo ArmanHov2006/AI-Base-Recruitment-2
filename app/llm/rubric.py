@@ -21,11 +21,11 @@ SCORE_TIERS: tuple[str, ...] = ("excellent", "strong", "partial", "weak", "none"
 # text in the scoring prompt. Coarse on purpose: the LLM only has to pick a
 # bucket, not a precise integer.
 TIER_POINTS: dict[str, int] = {
-    "excellent": 95,   # reserved for standout evidence, not just qualified
-    "strong":    78,   # qualified with real project evidence
-    "partial":   53,   # partially qualified or skills without evidence
-    "weak":      28,   # significant gaps
-    "none":      12,   # essentially unqualified
+    "excellent": 95,  # reserved for standout evidence, not just qualified
+    "strong": 78,  # qualified with real project evidence
+    "partial": 53,  # partially qualified or skills without evidence
+    "weak": 28,  # significant gaps
+    "none": 12,  # essentially unqualified
 }
 
 # The four scored dimensions and their aggregation weights. MUST sum to 1.0.
@@ -92,4 +92,36 @@ def tiers_to_dimension_points(tiers: dict) -> dict[str, int]:
 def aggregate(dimension_points: dict[str, int]) -> int:
     """Weighted aggregation of dimension points → overall 0-100 integer."""
     overall = sum(dimension_points[dim] * w for dim, w in SCORE_WEIGHTS.items())
+    return int(round(overall))
+
+
+# ---------------------------------------------------------------------------
+# Interview scoring — dimensions + weights
+# ---------------------------------------------------------------------------
+
+# Interview scoring dimensions + weights. MUST sum to 1.0.
+INTERVIEW_WEIGHTS: dict[str, float] = {
+    "technical_accuracy": 0.45,
+    "answer_relevance": 0.25,
+    "problem_structure": 0.18,
+    "communication": 0.12,
+}
+
+assert abs(sum(INTERVIEW_WEIGHTS.values()) - 1.0) < 1e-9, "INTERVIEW_WEIGHTS must sum to 1.0"
+
+
+def interview_tiers_to_points(tiers: dict) -> dict[str, int]:
+    """Map {dimension: tier} → {dimension: points} for interview dimensions.
+    Every weighted dimension must be present. Reuses TIER_POINTS + normalize_tier."""
+    points: dict[str, int] = {}
+    for dim in INTERVIEW_WEIGHTS:
+        if dim not in tiers:
+            raise ValueError(f"missing interview dimension in LLM output: {dim!r}")
+        points[dim] = TIER_POINTS[normalize_tier(tiers[dim])]
+    return points
+
+
+def aggregate_interview(dimension_points: dict[str, int]) -> int:
+    """Weighted aggregation of interview dimension points → 0-100 integer."""
+    overall = sum(dimension_points[dim] * w for dim, w in INTERVIEW_WEIGHTS.items())
     return int(round(overall))

@@ -16,8 +16,7 @@ class OpenAIClient:
     def __init__(self) -> None:
         if not settings.openai_api_key:
             raise ValueError(
-                "OPENAI_API_KEY is required when LLM_PROVIDER=openai. "
-                "Set it in .env or switch LLM_PROVIDER=ollama."
+                "OPENAI_API_KEY is required when LLM_PROVIDER=openai. Set it in .env or switch LLM_PROVIDER=ollama."
             )
         self._client = AsyncOpenAI(
             api_key=settings.openai_api_key,
@@ -43,9 +42,7 @@ class OpenAIClient:
         try:
             response = await self._client.embeddings.create(**kwargs)
         except APITimeoutError as exc:
-            raise LLMTimeoutError(
-                f"Embedding request timed out after {settings.llm_timeout_seconds}s"
-            ) from exc
+            raise LLMTimeoutError(f"Embedding request timed out after {settings.llm_timeout_seconds}s") from exc
         except OpenAIRateLimitError as exc:
             raise LLMParseError(f"Embedding rate limited: {exc}") from exc
         except Exception as exc:
@@ -86,9 +83,7 @@ class OpenAIClient:
             raise LLMParseError("OpenAI returned empty completion")
         return message
 
-    async def chat_stream(
-        self, system_prompt: str, user_message: str
-    ) -> AsyncGenerator[str, None]:
+    async def chat_stream(self, system_prompt: str, user_message: str) -> AsyncGenerator[str, None]:
         try:
             stream = await self._client.chat.completions.create(
                 model=settings.openai_model,
@@ -117,3 +112,4 @@ OpenAIClient.suggest_skill_split = OllamaClient.suggest_skill_split
 OpenAIClient.suggest_interview_questions = OllamaClient.suggest_interview_questions
 OpenAIClient.generate_job_description = OllamaClient.generate_job_description
 OpenAIClient.tiebreaker_analysis = OllamaClient.tiebreaker_analysis
+OpenAIClient.score_interview = OllamaClient.score_interview

@@ -100,9 +100,7 @@ def score_candidate_for_job_task(self, candidate_id: str, job_id: str) -> None:
     from app.worker.scoring import score_candidate_for_job_async
 
     try:
-        asyncio.run(
-            score_candidate_for_job_async(uuid.UUID(candidate_id), uuid.UUID(job_id))
-        )
+        asyncio.run(score_candidate_for_job_async(uuid.UUID(candidate_id), uuid.UUID(job_id)))
     except Exception as exc:
         log.warning(
             "score_candidate_for_job.retry",
@@ -123,6 +121,7 @@ def send_notification_email_task(to: str, subject: str, body: str) -> None:
         import html as _html
 
         from app.users.email import _send
+
         await _send(to=to, subject=subject, html=f"<pre>{_html.escape(body)}</pre>")
 
     try:
@@ -249,13 +248,12 @@ async def _send_interview_reminders() -> dict:
                 await db.commit()
 
                 try:
-                    job_result = await db.execute(
-                        select(Job).where(Job.id == app.job_id)
-                    )
+                    job_result = await db.execute(select(Job).where(Job.id == app.job_id))
                     job = job_result.scalar_one_or_none()
                     if job:
                         label = "24h" if reminder_action == BusinessEventAction.INTERVIEW_REMINDER_24H else "1h"
                         from app.watchers.service import fan_out
+
                         await fan_out(
                             db,
                             "interview_reminder",
@@ -298,6 +296,7 @@ def send_interview_reminders_task() -> dict:
 # Elasticsearch outbox tasks (F4)
 # ---------------------------------------------------------------------------
 
+
 @celery_app.task(
     name="es.index_candidate",
     bind=True,
@@ -311,6 +310,7 @@ def es_index_candidate_task(self, candidate_id: str) -> dict:
     Retried up to 5× with exponential back-off so ES downtime never drifts
     the index permanently.
     """
+
     async def _do() -> dict:
         from sqlalchemy import select
 
@@ -319,9 +319,7 @@ def es_index_candidate_task(self, candidate_id: str) -> dict:
         from app.search.service import index_candidate
 
         async with async_session_factory() as db:
-            result = await db.execute(
-                select(Candidate).where(Candidate.id == uuid.UUID(candidate_id))
-            )
+            result = await db.execute(select(Candidate).where(Candidate.id == uuid.UUID(candidate_id)))
             candidate = result.scalar_one_or_none()
             if candidate is None:
                 log.warning("es_index_candidate.not_found", candidate_id=candidate_id)
@@ -344,6 +342,7 @@ def es_index_candidate_task(self, candidate_id: str) -> dict:
 )
 def es_remove_candidate_task(self, candidate_id: str) -> dict:
     """Mark a candidate as deleted in Elasticsearch (soft-delete)."""
+
     async def _do() -> dict:
         from app.search.service import remove_candidate
 
@@ -367,6 +366,7 @@ def es_backfill_candidates_task() -> dict:
 
     Run once after initial deployment or whenever the ES index is wiped.
     """
+
     async def _do() -> dict:
         from app.database import async_session_factory
         from app.search.service import backfill_all_candidates
@@ -383,6 +383,7 @@ def es_backfill_candidates_task() -> dict:
 # ---------------------------------------------------------------------------
 # SLA alert task (#7)
 # ---------------------------------------------------------------------------
+
 
 async def _send_sla_alerts() -> dict:
     from datetime import datetime, timedelta, timezone
@@ -403,9 +404,7 @@ async def _send_sla_alerts() -> dict:
     async with async_session_factory() as db:
         now = datetime.now(timezone.utc)
 
-        jobs_result = await db.execute(
-            select(Job).where(Job.sla_days.isnot(None), Job.deleted_at.is_(None))
-        )
+        jobs_result = await db.execute(select(Job).where(Job.sla_days.isnot(None), Job.deleted_at.is_(None)))
         jobs = {j.id: j for j in jobs_result.scalars().all()}
 
         if not jobs:
@@ -447,9 +446,7 @@ async def _send_sla_alerts() -> dict:
 
             days_stale = int((now - updated).total_seconds() / 86400)
 
-            cand_result = await db.execute(
-                select(Candidate).where(Candidate.id == app.candidate_id)
-            )
+            cand_result = await db.execute(select(Candidate).where(Candidate.id == app.candidate_id))
             candidate = cand_result.scalar_one_or_none()
 
             await record(
@@ -482,6 +479,7 @@ async def _send_sla_alerts() -> dict:
                 alerted += 1
                 try:
                     from app.notifications.webhook import notify_sla_alert
+
                     await notify_sla_alert(
                         candidate_name=candidate.name if candidate else None,
                         job_title=job.title,
@@ -507,6 +505,7 @@ def send_sla_alerts_task() -> dict:
 # ---------------------------------------------------------------------------
 # Digest email task (#1)
 # ---------------------------------------------------------------------------
+
 
 async def _send_digests(preference: str) -> dict:
     from datetime import datetime, timedelta, timezone
@@ -535,13 +534,15 @@ async def _send_digests(preference: str) -> dict:
 
         for user in users:
             notifs_result = await db.execute(
-                select(Notification).where(
+                select(Notification)
+                .where(
                     and_(
                         Notification.user_id == user.id,
                         Notification.emailed_at.is_(None),
                         Notification.created_at > now - window,
                     )
-                ).order_by(Notification.created_at.asc())
+                )
+                .order_by(Notification.created_at.asc())
             )
             notifs = notifs_result.scalars().all()
             if not notifs:
@@ -581,6 +582,7 @@ def send_weekly_digest_task() -> dict:
 # ---------------------------------------------------------------------------
 # Slack daily pipeline summary
 # ---------------------------------------------------------------------------
+
 
 async def _slack_daily_summary() -> dict:
     from datetime import datetime, timezone
@@ -652,3 +654,49 @@ async def _slack_daily_summary() -> dict:
 @celery_app.task(name="slack.daily_summary")
 def slack_daily_summary_task() -> dict:
     return asyncio.run(_slack_daily_summary())
+
+
+# ---------------------------------------------------------------------------
+# Interview transcription + scoring (Lane B)
+# ---------------------------------------------------------------------------
+
+
+@celery_app.task(
+    name="interview.transcribe_and_score",
+    bind=True,
+    # Transient errors (S3Error, subprocess.TimeoutExpired, OSError) are retried.
+    # Permanent errors (LLMParseError, FileValidationError, ValueError) are NOT
+    # retried — the pipeline marks session.status="failed" and re-raises; the
+    # except block below skips self.retry so those propagate immediately.
+    autoretry_for=(Exception,),
+    retry_backoff=True,
+    max_retries=3,
+)
+def transcribe_and_score_task(self, session_id: str) -> None:
+    """Sync Celery wrapper: download → STT → LLM score → upsert CandidateEvaluation."""
+    from app.llm.base import LLMParseError as _LLMParseError
+    from app.storage.validator import FileValidationError as _FileValidationError
+
+    _PERMANENT = (_LLMParseError, _FileValidationError, ValueError)
+
+    try:
+        import uuid as _uuid
+
+        from app.worker.interview import transcribe_and_score
+
+        asyncio.run(transcribe_and_score(_uuid.UUID(session_id)))
+    except _PERMANENT as exc:
+        # Permanent failure — do NOT retry; let Celery mark the task as failed.
+        log.error(
+            "interview.transcribe_and_score.permanent_failure",
+            session_id=session_id,
+            error=str(exc),
+        )
+        raise
+    except Exception as exc:
+        log.warning(
+            "interview.transcribe_and_score.transient_retry",
+            session_id=session_id,
+            error=str(exc),
+        )
+        raise
