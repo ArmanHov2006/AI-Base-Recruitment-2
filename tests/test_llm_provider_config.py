@@ -28,7 +28,12 @@ def test_get_llm_client_returns_correct_type(provider: str, expected_type: type)
         mock_factory_settings.llm_provider = provider
         mock_oc_settings.openai_api_key = "test-key"
         mock_oc_settings.llm_timeout_seconds = 30
+        import app.llm.factory
         from app.llm.factory import get_llm_client
+
+        # Reset the module-level singleton cache so this test case doesn't inherit
+        # the cached client from a previous parametrized iteration.
+        app.llm.factory._client = None
 
         client = get_llm_client()
         assert isinstance(client, expected_type), (

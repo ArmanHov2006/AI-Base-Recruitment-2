@@ -3,12 +3,15 @@ import pytest
 
 from app.comparisons.utils import to_ten_scale
 from app.llm.rubric import (
+    SCORE_TIERS,
     SCORE_WEIGHTS,
     TIER_POINTS,
     aggregate,
     apply_local_bonus,
     is_local_hire,
     normalize_tier,
+    points_to_tier,
+    tier_distance,
     tiers_to_dimension_points,
 )
 
@@ -148,3 +151,27 @@ def test_apply_local_bonus_does_not_mutate_input() -> None:
 )
 def test_to_ten_scale(raw: int | None, expected: float | None) -> None:
     assert to_ten_scale(raw) == expected
+
+
+@pytest.mark.parametrize("tier", SCORE_TIERS)
+def test_points_to_tier_round_trips_every_tier(tier: str) -> None:
+    assert points_to_tier(TIER_POINTS[tier]) == tier
+
+
+def test_points_to_tier_rejects_unknown_points() -> None:
+    with pytest.raises(ValueError):
+        points_to_tier(50)
+
+
+@pytest.mark.parametrize(
+    "a,b,expected",
+    [
+        ("excellent", "excellent", 0),
+        ("excellent", "strong", 1),
+        ("excellent", "none", 4),
+        ("weak", "strong", 2),
+        ("STRONG", " weak ", 2),  # normalize_tier handles case/space
+    ],
+)
+def test_tier_distance(a: str, b: str, expected: int) -> None:
+    assert tier_distance(a, b) == expected

@@ -23,12 +23,22 @@ export interface StartAttemptResponse {
 /**
  * Request a presigned POST policy from the backend.
  * Returns the upload URL, the required form fields, and the generated file_id.
+ * Requires the per-session access token (from the interview invite link) —
+ * the endpoint rejects requests that are not bound to a live session.
  */
-export async function getUploadUrl(contentType: string): Promise<UploadUrlResponse> {
+export async function getUploadUrl(
+  contentType: string,
+  sessionId: string,
+  accessToken: string,
+): Promise<UploadUrlResponse> {
   const res = await fetch(`${API_BASE}/interviews/public/upload-url`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ content_type: contentType }),
+    body: JSON.stringify({
+      content_type: contentType,
+      session_id: sessionId,
+      access_token: accessToken,
+    }),
   });
   if (!res.ok) {
     const detail = await res.text();
@@ -44,9 +54,11 @@ export async function getUploadUrl(contentType: string): Promise<UploadUrlRespon
 export async function startAnswerAttempt(
   sessionId: string,
   questionIndex: number,
+  accessToken: string,
 ): Promise<StartAttemptResponse> {
   const res = await fetch(
-    `${API_BASE}/interviews/public/${sessionId}/answers/${questionIndex}/start`,
+    `${API_BASE}/interviews/public/${sessionId}/answers/${questionIndex}/start` +
+      `?token=${encodeURIComponent(accessToken)}`,
     { method: 'POST' },
   );
   if (res.status === 409) {

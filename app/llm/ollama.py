@@ -556,9 +556,12 @@ class OllamaClient:
             data = json.loads(raw)
             tiers = data["dimension_scores"]
             # LLM picks anchored tiers; apply any post-LLM policy adjustments
-            # (e.g. local-hire bonus) before the deterministic aggregation so
-            # policy lives in Python, not in the prompt.
-            tiers = apply_local_bonus(tiers, candidate.location)
+            # before the deterministic aggregation so policy lives in Python,
+            # not in the prompt. The local-hire bonus is a geographic proxy and
+            # a bias-audit liability, so it is gated OFF by default and only
+            # applied when explicitly enabled via SCORE_LOCAL_HIRE_BONUS.
+            if settings.score_local_hire_bonus:
+                tiers = apply_local_bonus(tiers, candidate.location)
             dimension_points = tiers_to_dimension_points(tiers)
             overall_score = aggregate(dimension_points)
             skill_breakdown = data.get("skill_breakdown")

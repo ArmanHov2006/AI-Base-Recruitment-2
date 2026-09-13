@@ -125,3 +125,22 @@ def aggregate_interview(dimension_points: dict[str, int]) -> int:
     """Weighted aggregation of interview dimension points → 0-100 integer."""
     overall = sum(dimension_points[dim] * w for dim, w in INTERVIEW_WEIGHTS.items())
     return int(round(overall))
+
+
+# Reverse of TIER_POINTS. Exact — every value in TIER_POINTS is unique, so this
+# round-trips losslessly. Used to recover the tier an LLM chose once its
+# dimension points have been stored (e.g. golden-set eval, audit trails).
+_POINTS_TO_TIER: dict[int, str] = {v: k for k, v in TIER_POINTS.items()}
+
+
+def points_to_tier(points: int) -> str:
+    """Inverse of TIER_POINTS: recover the tier label from its point value."""
+    try:
+        return _POINTS_TO_TIER[points]
+    except KeyError:
+        raise ValueError(f"unknown score points: {points!r} (expected one of {list(_POINTS_TO_TIER)})") from None
+
+
+def tier_distance(a: str, b: str) -> int:
+    """Absolute distance between two tiers on the SCORE_TIERS ladder (0 = exact match)."""
+    return abs(_TIER_INDEX[normalize_tier(a)] - _TIER_INDEX[normalize_tier(b)])

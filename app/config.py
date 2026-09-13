@@ -39,6 +39,12 @@ class Settings(BaseSettings):
     # 300s — Ollama cold-load (model pull + first inference) can exceed 180s on CPU
     llm_timeout_seconds: int = 300
 
+    # Local-hire scoring bonus (geographic proxy). OFF by default: geographic
+    # location is an adverse-impact vector under EU AI Act / NYC LL144-style
+    # bias audits, so it must be an explicit, logged opt-in — never a silent
+    # default. When enabled, see app/llm/rubric.py::apply_local_bonus.
+    score_local_hire_bonus: bool = False
+
     openai_api_key: str = ""
     openai_model: str = "gpt-4o-mini"
     openai_embed_model: str = "text-embedding-3-small"

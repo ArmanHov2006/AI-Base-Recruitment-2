@@ -37,6 +37,10 @@ class InterviewAnswerRead(BaseModel):
 
 class UploadUrlRequest(BaseModel):
     content_type: str
+    # Session-scoped auth: presigned-URL minting is bound to a live interview
+    # session so it cannot be abused anonymously (storage-DoS vector).
+    session_id: uuid.UUID
+    access_token: str
 
 
 class UploadUrlResponse(BaseModel):

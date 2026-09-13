@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Sync dependencies
+        run: uv sync --frozen
+
+      - name: Ruff lint check
+        run: uv run ruff check app tests
+
+      # NOTE: `ruff format --check` is intentionally omitted until a one-time
+      # `uv run ruff format app tests` sweep lands (the existing codebase predates
+      # ruff-format and would fail the check on ~86 files). Re-enable this step
+      # right after that formatting commit.
+
+      - name: Type check
+        run: uv run mypy app
+
+      - name: Run tests (fast suite, infra-dependent tests skipped)
+        run: uv run pytest --ignore tests/test_e2e_pipeline.py --ignore tests/test_elasticsearch.py

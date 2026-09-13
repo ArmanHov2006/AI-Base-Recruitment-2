@@ -56,3 +56,9 @@ Run: `uv run alembic upgrade head`
 uv run pytest                   # all 212 tests
 uv run pytest tests/test_auth.py -v
 ```
+
+Golden-set eval (interview-scoring tier drift, needs live Ollama/OpenAI, opt-in):
+
+```
+RUN_GOLDEN_EVAL=1 uv run pytest tests/test_interview_scoring_golden.py -v
+```

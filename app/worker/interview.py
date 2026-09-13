@@ -247,7 +247,10 @@ def _process_answer(answer: InterviewAnswer, minio_client) -> None:  # type: ign
     Heavy I/O (download, ffmpeg, whisper) blocks; acceptable for Celery worker.
     """
     bucket = settings.minio_bucket
-    key = answer.recording_file_id  # type: ignore[assignment]
+    key = answer.recording_file_id
+
+    if key is None:
+        raise ValueError(f"InterviewAnswer {answer.id} missing recording_file_id")
 
     # Derive a filename for extension detection from the object key
     filename = os.path.basename(key)

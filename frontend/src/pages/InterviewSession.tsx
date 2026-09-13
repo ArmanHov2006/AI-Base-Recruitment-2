@@ -144,6 +144,9 @@ async function fetchSessionInfo(
 
 export default function InterviewSession() {
   const { sessionId = '' } = useParams<{ sessionId: string }>();
+  // Per-session access token from the interview invite link (?token=...).
+  // The public recorder endpoints require it.
+  const accessToken = new URLSearchParams(window.location.search).get('token') ?? '';
   const [state, dispatch] = useReducer(reducer, initialState);
 
   // Refs that survive re-renders
@@ -276,7 +279,7 @@ export default function InterviewSession() {
 
     // D3 attempt-lock: consume attempt before recording starts
     try {
-      await startAnswerAttempt(sessionId, 0);
+      await startAnswerAttempt(sessionId, 0, accessToken);
     } catch (err: unknown) {
       const e = err as { status?: number };
       if (e.status === 409) {
@@ -355,7 +358,7 @@ export default function InterviewSession() {
     const contentType = mimeTypeRef.current || 'video/webm';
 
     try {
-      const { url, fields, file_id } = await getUploadUrl(contentType);
+      const { url, fields, file_id } = await getUploadUrl(contentType, sessionId, accessToken);
       await uploadVideoBlob(url, fields, file_id, blob, contentType, (pct) => {
         dispatch({ type: 'SET_UPLOAD_PCT', pct });
       });
